@@ -33,9 +33,21 @@ You can change the output (elf, binary) name by changing the NAME variable in th
 
 ## release (default)
 Uses a set of optimizations to speed up code and reduce its size, but make almost impossible to debug.
+``` shell
+make release
+```
 
 ## debug
 Adds a lot of information to the executable, improving the debug experience
+``` shell
+make debug
+```
+
+## clean
+Delete all temporary files, the elf and binary.
+``` shell
+make clean
+```
 
 # Flashing the MCU
 ## dfu-util
