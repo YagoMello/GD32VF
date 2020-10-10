@@ -21,8 +21,10 @@ LDS = GD32VF103xB.lds
 TOOLCHAIN_PREFIX = riscv32-unknown-elf-
 TOOLCHAIN_FOLDER = /opt/riscv-gcc/gd32vf103/bin/
 
-# EXECUTABLE
+# PROPERTIES
 NAME = prog
+MACRODEF += -D HXTAL_VALUE=8000000
+MACRODEF += -D LXTAL_VALUE=32768
 
 # GCC toolchain programs.
 CC  = $(TOOLCHAIN_FOLDER)/$(TOOLCHAIN_PREFIX)gcc
@@ -54,7 +56,7 @@ MCUFLAGS += -mabi=ilp32
 MCUFLAGS += -mcmodel=medlow
 
 # Optimization
-DBGFLAGS += -Og
+DBGFLAGS += -O0
 DBGFLAGS += -g3
 DBGFLAGS += -D_FORTIFY_SOURCE=2
 
@@ -70,6 +72,7 @@ ASFLAGS += -Wextra
 ASFLAGS += -x assembler-with-cpp
 
 # C compilation directives
+CFLAGS += -D DEBUG
 CFLAGS += -c
 CFLAGS += -Wall
 CFLAGS += -Wextra
@@ -120,9 +123,9 @@ INCLUDE += -I$(FW)/GD32VF103_standard_peripheral/
 INCLUDE += -I$(FW)/GD32VF103_standard_peripheral/Include/
 
 release:
-	$(CC)  $(MCUFLAGS) $(ASFLAGS)  $(RELFLAGS) $(INCLUDE) $(ASM)
-	$(CC)  $(MCUFLAGS) $(CFLAGS)   $(RELFLAGS) $(INCLUDE) $(FIRM) $(CODE_C)
-	$(CXX) $(MCUFLAGS) $(CXXFLAGS) $(RELFLAGS) $(INCLUDE) $(CODE_CPP)
+	$(CC)  $(MCUFLAGS) $(ASFLAGS)  $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(ASM)
+	$(CC)  $(MCUFLAGS) $(CFLAGS)   $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(FIRM) $(CODE_C)
+	$(CXX) $(MCUFLAGS) $(CXXFLAGS) $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(CODE_CPP)
 	$(CXX) $(MCUFLAGS) $(RLFLAGS)  *.o -o      $(BIN)/$(NAME).elf
 	$(OC) -S -O binary $(BIN)/$(NAME).elf      $(BIN)/$(NAME).bin
 	@echo  ''
@@ -131,9 +134,9 @@ release:
 	@echo  ''
 
 debug:
-	$(CC)  $(MCUFLAGS) $(ASFLAGS)  $(DBGFLAGS) $(INCLUDE) $(ASM)
-	$(CC)  $(MCUFLAGS) $(CFLAGS)   $(DBGFLAGS) $(INCLUDE) $(FIRM) $(CODE_C)
-	$(CXX) $(MCUFLAGS) $(CXXFLAGS) $(DBGFLAGS) $(INCLUDE) $(CODE_CPP)
+	$(CC)  $(MCUFLAGS) $(ASFLAGS)  $(DBGFLAGS) $(MACRODEF) $(INCLUDE) $(ASM)
+	$(CC)  $(MCUFLAGS) $(CFLAGS)   $(DBGFLAGS) $(MACRODEF) $(INCLUDE) $(FIRM) $(CODE_C)
+	$(CXX) $(MCUFLAGS) $(CXXFLAGS) $(DBGFLAGS) $(MACRODEF) $(INCLUDE) $(CODE_CPP)
 	$(CXX) $(MCUFLAGS) $(DLFLAGS)  *.o -o      $(BIN)/$(NAME).elf
 	$(OC) -S -O binary $(BIN)/$(NAME).elf      $(BIN)/$(NAME).bin
 	@echo  ''
