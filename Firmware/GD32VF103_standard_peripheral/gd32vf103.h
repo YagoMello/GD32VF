@@ -35,8 +35,6 @@ OF SUCH DAMAGE.
 #ifndef GD32VF103_H
 #define GD32VF103_H
 
-#define GD32VF103V_EVAL
-
 #ifdef __cplusplus
  extern "C" {
 #endif 

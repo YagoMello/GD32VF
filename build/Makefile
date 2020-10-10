@@ -66,7 +66,6 @@ RELFLAGS += -fuse-linker-plugin
 
 # Assembly directives.
 ASFLAGS += -c
-ASFLAGS += -O0
 ASFLAGS += -Wall
 ASFLAGS += -Wextra
 ASFLAGS += -x assembler-with-cpp
@@ -79,7 +78,6 @@ CFLAGS += -Wextra
 CFLAGS += -Wno-unused-variable
 CFLAGS += -Wno-unused-parameter
 CFLAGS += --specs=nosys.specs
-CFLAGS += -flto -fuse-linker-plugin
 
 # CXX compilation directives
 CXXFLAGS += -std=c++17
@@ -122,12 +120,20 @@ INCLUDE += -I$(FW)/RISCV/drivers/
 INCLUDE += -I$(FW)/GD32VF103_standard_peripheral/
 INCLUDE += -I$(FW)/GD32VF103_standard_peripheral/Include/
 
+# Debug Objcopy Flags
+DOCFLAGS += -S
+DOCFLAGS += -O binary
+
+# Release Objcopy flags
+ROCFLAGS += -S 
+ROCFLAGS += -O binary
+
 release:
 	$(CC)  $(MCUFLAGS) $(ASFLAGS)  $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(ASM)
 	$(CC)  $(MCUFLAGS) $(CFLAGS)   $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(FIRM) $(CODE_C)
 	$(CXX) $(MCUFLAGS) $(CXXFLAGS) $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(CODE_CPP)
 	$(CXX) $(MCUFLAGS) $(RLFLAGS)  *.o -o      $(BIN)/$(NAME).elf
-	$(OC) -S -O binary $(BIN)/$(NAME).elf      $(BIN)/$(NAME).bin
+	$(OC)  $(ROCFLAGS) $(BIN)/$(NAME).elf      $(BIN)/$(NAME).bin
 	@echo  ''
 	@file  $(BIN)/$(NAME).elf
 	@$(OS) $(BIN)/$(NAME).elf
@@ -138,7 +144,7 @@ debug:
 	$(CC)  $(MCUFLAGS) $(CFLAGS)   $(DBGFLAGS) $(MACRODEF) $(INCLUDE) $(FIRM) $(CODE_C)
 	$(CXX) $(MCUFLAGS) $(CXXFLAGS) $(DBGFLAGS) $(MACRODEF) $(INCLUDE) $(CODE_CPP)
 	$(CXX) $(MCUFLAGS) $(DLFLAGS)  *.o -o      $(BIN)/$(NAME).elf
-	$(OC) -S -O binary $(BIN)/$(NAME).elf      $(BIN)/$(NAME).bin
+	$(OC)  $(DOCFLAGS) $(BIN)/$(NAME).elf      $(BIN)/$(NAME).bin
 	@echo  ''
 	@file  $(BIN)/$(NAME).elf
 	@$(OS) $(BIN)/$(NAME).elf
