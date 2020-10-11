@@ -7,7 +7,15 @@
 #include "systick.h"
 #include "basti79_font.h"
 #include "gd32vf103.h"
+#include "lcd_colors.h"
 
+/*
+ * Author:  Yago Teodoro de Mello
+ * Date:    2020-10-10
+ * License: MIT
+ * V1.0.0
+ * 
+ */
 
 namespace lcd {
     // PB0 - RS (DCX)
@@ -72,6 +80,8 @@ namespace lcd {
               const uint16_t rows_offset = 0, 
               const uint16_t cols_offset = 0);
     
+    void load_defaults_longan();
+    
     void write(const uint8_t * payload, const uint16_t dim_rows, const uint16_t dim_cols);
     
     void fill_rect(const uint16_t row_start, 
@@ -127,6 +137,7 @@ namespace lcd {
     
     extern pmstring_t sprintf_buffer;
     */
+    
 }
 
 #endif //LCD_H

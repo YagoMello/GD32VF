@@ -1,11 +1,17 @@
 #include "printf.h"
 #include "lcd.h" 
 
+/*
+ * Author:  Yago Teodoro de Mello
+ * Date:    2020-10-10
+ * License: MIT
+ * V1.0.0
+ */
+
 void lcd::init_clock(){
     rcu_periph_clock_enable(RCU_GPIOA);
     rcu_periph_clock_enable(RCU_GPIOB);
     rcu_periph_clock_enable(RCU_AF);
-    rcu_ahb_clock_config(RCU_AHB_CKSYS_DIV2);
     rcu_periph_clock_enable(RCU_SPI0);
 }
 
@@ -196,7 +202,20 @@ void lcd::init(
     
     send_sleepout();
     send_dispon();
+}
+
+void lcd::load_defaults_longan(){
+    lcd::init(80, 160, 26, 1);
+    
+    lcd::adjust(lcd::XY_EXCHANGE, 
+                lcd::X_MIRROR, 
+                lcd::Y_NORMAL, 
+                lcd::COLOR_BGR);
+    
     send_invon();
+    
+    send_gamset(1);
+    
 }
 
 void lcd::write(const uint8_t * payload, const uint16_t dim_rows, const uint16_t dim_cols){
@@ -212,9 +231,11 @@ void lcd::write(const uint8_t * payload, const uint16_t dim_rows, const uint16_t
     if(cursor_col + dim_cols > screen_cols){
         if(cursor_row + dim_rows > screen_rows){
             cursor_row = 0;
+            cursor_col = 0;
         }
         else{
             cursor_row += dim_rows;
+            cursor_col = 0;
         }
     }
     else{

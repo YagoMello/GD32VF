@@ -1,7 +1,16 @@
 #include "basti79_font.h"
 
-// https://raw.githubusercontent.com/basti79/LCD-fonts/master/6x8.bmp
-// https://github.com/basti79/LCD-fonts/blob/master/6x8_horizontal_MSB_1.h
+/*
+ * Author:  Yago Teodoro de Mello
+ * Date:    2020-10-10
+ * License: MIT
+ * V1.0.0
+ * 
+ * Source:
+ * https://raw.githubusercontent.com/basti79/LCD-fonts/master/6x8.bmp
+ * https://github.com/basti79/LCD-fonts/blob/master/6x8_horizontal_MSB_1.h
+ * 
+ */
 
 const char font[256][8]={
 {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},	// 0x00
