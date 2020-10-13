@@ -35,6 +35,7 @@ extern "C" {
 #endif
     void delay_1ms(uint32_t count);
     void delay_1us(uint32_t count);
+    void delay_1ns(uint32_t count);
 #ifdef __cplusplus
 }
 #endif

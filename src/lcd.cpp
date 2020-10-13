@@ -352,6 +352,11 @@ void lcd::lputc(
         case '\r':
             cursor_col = 0;
             break;
+        
+        case '\b':
+            cursor_row -= FONT_ROWS;
+            cursor_col = 0;
+            break;
             
         default:
             decompose(uint8_t(id),

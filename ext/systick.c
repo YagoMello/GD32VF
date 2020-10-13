@@ -53,7 +53,7 @@ void delay_1ms(uint32_t count){
 
     do {
         delta_mtime = get_timer_value() - start_mtime;
-    }while(delta_mtime < (rcu_clock_freq_get(CK_AHB) / (1000 * 4) * count));
+    }while(delta_mtime < (rcu_clock_freq_get(CK_AHB) / (1000ULL * 4) * count));
 }
 
 void delay_1us(uint32_t count){
@@ -67,5 +67,19 @@ void delay_1us(uint32_t count){
 
     do {
         delta_mtime = get_timer_value() - start_mtime;
-    }while(delta_mtime < (rcu_clock_freq_get(CK_AHB) / (1000000 * 4) * count));
+    }while(delta_mtime < (rcu_clock_freq_get(CK_AHB) / (1000000ULL * 4) * count));
+}
+
+void delay_1ns(uint32_t count){
+    uint64_t start_mtime, delta_mtime;
+
+    // Don't start measuruing until we see an mtime tick
+    uint64_t tmp = get_timer_value();
+    do {
+        start_mtime = get_timer_value();
+    } while (start_mtime == tmp);
+
+    do {
+        delta_mtime = get_timer_value() - start_mtime;
+    }while(delta_mtime < (rcu_clock_freq_get(CK_AHB) / (1000000000ULL * 4) * count));
 }

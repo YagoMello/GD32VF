@@ -2,34 +2,19 @@
 #include "gd32vf103_rcu.h"
 #include "systick.h"
 #include "lcd.h"
+#include "lcd_test_functions.hpp"
+#include "longan_nano_leds.h"
+#include "one_wire.h"
+#include "ds18b20.h"
 #include <cstdint>
 
 /*
  * Author:  Yago Teodoro de Mello
- * Date:    2020-10-10
+ * Date:    2020-10-13
  * License: MIT
- * V1.0.0
+ * V1.6.0
  * 
  */
-
-#define BLACK   1, 1, 1
-#define RED     0, 1, 1
-#define GREEN   1, 0, 1
-#define BLUE    1, 1, 0
-#define YELLOW  0, 0, 1
-#define PURPLE  0, 1, 0
-#define CYAN    1, 0, 0
-#define WHITE   0, 0, 0
-
-void init_led();
-void set_red(uint_fast8_t value);
-void set_green(uint_fast8_t value);
-void set_blue(uint_fast8_t value);
-void set_rgb(uint_fast8_t red, uint_fast8_t green, uint_fast8_t blue);
-void led_all_colors();
-void gamma_test_step();
-void gamma_test_linear_color(uint8_t red, uint8_t green, uint8_t blue, uint8_t white, uint8_t step = 3, uint8_t count = 22);
-void lcd_color_test();
 
 void config_clk(){
     
@@ -60,188 +45,104 @@ int main(void){
     
     lcd::load_defaults_longan();
     
-    set_rgb(RED);
+    set_rgb(LED_RED);
     
     lcd::fill_rect(0, 80, 0, 160, LCD_DARKBLUE);
     
-    lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "LC-Display test ");
-    if(rcu_system_clock_source_get() != RCU_SCSS_PLL)
-        lcd::lprintf(LCD_RED, LCD_YELLOW, "CKSYS FAIL\n");
-    else
-        lcd::lprintf(LCD_WHITE, LCD_DARKGREEN, "CKSYS OK\n");
-    
-    lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "Frequency AHB:  %7lukHz\nFrequency APB2: %7lukHz\n", rcu_clock_freq_get(CK_AHB)/1000, rcu_clock_freq_get(CK_APB2)/1000);
+    //lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "LC-Display test ");
+    //lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "Frequency AHB:  %7lukHz\nFrequency APB2: %7lukHz\n", rcu_clock_freq_get(CK_AHB)/1000, rcu_clock_freq_get(CK_APB2)/1000);
     lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "Frequency CKSYS:%7lukHz\n", rcu_clock_freq_get(CK_SYS)/1000);
     
-    lcd_color_test();
+    rcu_periph_clock_enable(RCU_GPIOB);
+    uint64_t devices[8];
     
-    gamma_test_linear_color(true, true, true, true);
+    one_wire_t wire(GPIOB, 
+                    GPIO_PIN_6, 
+                    8, 
+                    devices);
     
-    set_rgb(GREEN);
+    ds18b20_t ds[8];
     
+    set_rgb(LED_YELLOW);
+    
+    wire.find_devices();
+    
+    set_rgb(LED_GREEN);
+    
+    uint8_t buffer[8][9];
     while(1){
-        gamma_test_step();
+        uint8_t ds_iterator = wire.get_device_count();
+        while(ds_iterator--){
+            wire.send(ds[ds_iterator].set_precision(11), 4, wire.get_id(ds_iterator));
+        }
         
-        delay_1ms(20);
+        lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "                ");
+        lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "\rReading");
+        uint8_t point_count = 4;
+        while(point_count--){
+            delay_1ms(50);
+            lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, ".");
+        }
+        lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "\n");
+        
+        if(!wire.send_reset()){
+            lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "\bLine Error  \n");
+        }
+        
+        ds_iterator = wire.get_device_count();
+        while(ds_iterator--){
+            wire.send(ds18b20_t::begin_conversion, 1, wire.get_id(ds_iterator));
+        }
+        
+        ds[0].delay_conversion();
+        
+        ds_iterator = wire.get_device_count();
+        while(ds_iterator--){
+            wire.request(ds18b20_t::read_scratchpad, 1, buffer[ds_iterator], 9, wire.get_id(ds_iterator));
+        }
+        
+        ds_iterator = wire.get_device_count();
+        while(ds_iterator--){
+            lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "Temp: %2.3f    \n[0]: %2hhx [1]: %2hhx ", ds[ds_iterator].get_temp(buffer[ds_iterator]), buffer[ds_iterator][0], buffer[ds_iterator][1]);
+            lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "[2]: %2hhx\n[3]: %2hhx [4]: %2hhx [5]: %2hhx\n", buffer[ds_iterator][2], buffer[ds_iterator][3], buffer[ds_iterator][4], buffer[ds_iterator][5]);
+            lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "[6]: %2hhx [7]: %2hhx [8]: %2hhx\n", buffer[ds_iterator][6], buffer[ds_iterator][7], buffer[ds_iterator][8]);
+            lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "\r%3hhu: %llx", ds_iterator, wire.get_id(ds_iterator));
+            delay_1ms(1000);
+            lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "\b\b\b\b");
+        }
+        
+        lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "\n\n\n\n");
+        wire.find_devices();
+        lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "Found %3hhu devices.    ", wire.get_device_count());
+        lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "\b\b\b\b");
+        
+        delay_1ms(500);
+        
+        lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "\b");
+        
+        delay_1ms(10);
     }
     
     return 0;
 }
 
-void led_all_colors(){
-    
-    set_rgb(BLACK);
-    delay_1ms(250);
-    
-    set_rgb(RED);
-    delay_1ms(250);
-    
-    set_rgb(YELLOW);
-    delay_1ms(250);
-    
-    set_rgb(GREEN);
-    delay_1ms(250);
-    
-    set_rgb(CYAN);
-    delay_1ms(250);
-    
-    set_rgb(BLUE);
-    delay_1ms(250);
 
-    set_rgb(PURPLE);
-    delay_1ms(250);
-    
-    set_rgb(WHITE);
-    delay_1ms(250);
-    
-    set_rgb(BLACK);
-    delay_1ms(250);
-}
 
-void init_led(){
-    /* enable the LED clock */
-    rcu_periph_clock_enable(RCU_GPIOA);
-    rcu_periph_clock_enable(RCU_GPIOC);
-    /* configure LED GPIO port */
-    gpio_init(GPIOA, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_1 | GPIO_PIN_2);
-    gpio_init(GPIOC, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_13);
-    
-    gpio_bit_reset(GPIOA, GPIO_PIN_1 | GPIO_PIN_2);
-    gpio_bit_reset(GPIOC, GPIO_PIN_13);
-}
 
-void set_red(uint_fast8_t value){
-    if(value){
-        gpio_bit_set(GPIOC, GPIO_PIN_13);
-    }
-    else{
-        gpio_bit_reset(GPIOC, GPIO_PIN_13);
-    }
-}
 
-void set_green(uint_fast8_t value){
-    if(value){
-        gpio_bit_set(GPIOA, GPIO_PIN_1);
-    }
-    else{
-        gpio_bit_reset(GPIOA, GPIO_PIN_1);
-    }
-}
 
-void set_blue(uint_fast8_t value){
-    if(value){
-        gpio_bit_set(GPIOA, GPIO_PIN_2);
-    }
-    else{
-        gpio_bit_reset(GPIOA, GPIO_PIN_2);
-    }
-}
 
-void set_rgb(uint_fast8_t red, uint_fast8_t green, uint_fast8_t blue){
-    set_red(red);
-    set_green(green);
-    set_blue(blue);
-}
 
-void gamma_test_step(){
-    static uint8_t iterator = 0;
-    lcd::lprintf(LCD_WHITE, LCD_DARKBLUE, "\rNumber: ");
-    lcd::lprintf(0x9F, 0xFF, 0x9F, 4 * iterator, 0x40, 0x80, "%4hhu", iterator % 64);
-        
-    if(iterator % 64 == 0){
-        lcd::send_gamset(iterator / 64);
-        lcd::lprintf(0x7F, 0x7F, 0x7F, LCD_DARKBLUE, "   gamma: %3hhu", iterator / 64);
-    }
-    
-    iterator += 1;
-}
 
-void gamma_test_linear_color(uint8_t red, uint8_t green, uint8_t blue, uint8_t white, uint8_t step, uint8_t count){
-    uint8_t iterator;
-    
-    iterator = 0;
-    if(red){
-        lcd::lputs("R: ", LCD_WHITE, LCD_DARKBLUE);
-        while(iterator < count){
-            lcd::lputc(' ', 0xFF, 0xFF, 0xFF, (step * iterator) << 2, 0, 0);
-            iterator++;
-        }
-        lcd::lputc('\n', 0xFF, 0xFF, 0xFF);
-    }
-    
-    iterator = 0;
-    if(green){
-        lcd::lputs("G: ", LCD_WHITE, LCD_DARKBLUE);
-        while(iterator < count){
-            lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0, (step * iterator) << 2, 0);
-            iterator++;
-        }
-        lcd::lputc('\n', 0xFF, 0xFF, 0xFF);
-    }
-    
-    iterator = 0;
-    if(blue){
-        lcd::lputs("B: ", LCD_WHITE, LCD_DARKBLUE);
-        while(iterator < count){
-            lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0, 0, (step * iterator) << 2);
-            iterator++;
-        }
-        lcd::lputc('\n', 0xFF, 0xFF, 0xFF);
-    }
-    
-    iterator = 0;
-    if(white){
-        lcd::lputs("W: ", LCD_WHITE, LCD_DARKBLUE);
-        while(iterator < count){
-            lcd::lputc(' ', 0xFF, 0xFF, 0xFF, (step * iterator) << 2, (step * iterator) << 2, (step * iterator) << 2);
-            iterator++;
-        }
-        lcd::lputc('\n', 0xFF, 0xFF, 0xFF);
-    }
-}
 
-void lcd_color_test(){
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x80);
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00);  // RED
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0x00);
-    
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00);  // YELLOW
-    
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0x80, 0xFF, 0x00);
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0x00);  // GREEN
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0x80);
-    
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF);  // CYAN
-    
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0x00, 0x80, 0xFF);
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF);  // BLUE
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0x80, 0x00, 0xFF);
-    
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF);  // MAGENTA
-    
-    lcd::lputc(' ', 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00);
-    lcd::lputs(" \n", 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
-}
+
+
+
+
+
+
+// Lcd Test 
+
 
 
 
