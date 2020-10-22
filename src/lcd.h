@@ -124,6 +124,41 @@ namespace lcd {
                  const char * format, 
                  ...);
     
+    void set_cursor(const uint16_t row, 
+                    const uint16_t col = 0);
+    
+    void set_cursor_row(const uint16_t row);
+    
+    void set_cursor_col(const uint16_t col);
+    
+    void lpprintf(const uint16_t row, 
+                  const uint16_t col, 
+                  const uint8_t red_font, 
+                  const uint8_t green_font, 
+                  const uint8_t blue_font, 
+                  const uint8_t red_background, 
+                  const uint8_t green_background, 
+                  const uint8_t blue_background,
+                  const char * format, 
+                  ...);
+    
+    void lpisrprintf(const uint16_t row, 
+                     const uint16_t col, 
+                     const uint8_t red_font, 
+                     const uint8_t green_font, 
+                     const uint8_t blue_font, 
+                     const uint8_t red_background, 
+                     const uint8_t green_background, 
+                     const uint8_t blue_background,
+                     const char * format, 
+                     ...);
+    
+    void clear_line(const uint16_t row, 
+                    const uint16_t col, 
+                    const uint8_t red_background, 
+                    const uint8_t green_background, 
+                    const uint8_t blue_background);
+    
     /*
     // poor mans std::string
     class pmstring_t {

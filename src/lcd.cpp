@@ -219,6 +219,7 @@ void lcd::load_defaults_longan(){
 }
 
 void lcd::write(const uint8_t * payload, const uint16_t dim_rows, const uint16_t dim_cols){
+    eclic_global_interrupt_enable();
     
     send_caset(cursor_col + screen_cols_offset, 
                cursor_col + dim_cols + screen_cols_offset);
@@ -242,6 +243,7 @@ void lcd::write(const uint8_t * payload, const uint16_t dim_rows, const uint16_t
         cursor_col += dim_cols;
     }
     
+    eclic_global_interrupt_enable();
 }
 
 
@@ -426,6 +428,121 @@ void lcd::lprintf(
                green_background, 
                blue_background);
     
+}
+
+void lcd::set_cursor(
+    const uint16_t row, 
+    const uint16_t col
+){
+    cursor_row = row * FONT_ROWS;
+    cursor_col = col * FONT_COLS;
+}
+
+void lcd::set_cursor_row(
+    const uint16_t row
+){
+    cursor_row = row * FONT_ROWS;
+}
+
+void lcd::set_cursor_col(
+    const uint16_t col
+){
+    cursor_col = col * FONT_COLS;
+}
+
+void lcd::lpprintf(
+    const uint16_t row, 
+    const uint16_t col, 
+    const uint8_t red_font, 
+    const uint8_t green_font, 
+    const uint8_t blue_font, 
+    const uint8_t red_background, 
+    const uint8_t green_background, 
+    const uint8_t blue_background,
+    const char * format,
+    ...
+){
+    lcd::set_cursor(row, col);
+    
+    va_list args;
+    char result[64];
+    
+    va_start(args, format);
+    vsnprintf(result, 64, format, args);
+    va_end(args);
+    
+    lcd::lputs(result,
+               red_font, 
+               green_font, 
+               blue_font, 
+               red_background, 
+               green_background, 
+               blue_background);
+    
+}
+
+void lcd::lpisrprintf(
+    const uint16_t row, 
+    const uint16_t col, 
+    const uint8_t red_font, 
+    const uint8_t green_font, 
+    const uint8_t blue_font, 
+    const uint8_t red_background, 
+    const uint8_t green_background, 
+    const uint8_t blue_background,
+    const char * format,
+    ...
+){
+    uint16_t temp_cursor_row = cursor_row;
+    uint16_t temp_cursor_col = cursor_col;
+    
+    lcd::set_cursor(row, col);
+    
+    va_list args;
+    char result[64];
+    
+    va_start(args, format);
+    vsnprintf(result, 64, format, args);
+    va_end(args);
+    
+    lcd::lputs(result,
+               red_font, 
+               green_font, 
+               blue_font, 
+               red_background, 
+               green_background, 
+               blue_background);
+    
+    lcd::set_cursor(temp_cursor_row, temp_cursor_col);
+}
+
+void lcd::clear_line(
+    const uint16_t row, 
+    const uint16_t col, 
+    const uint8_t red_background, 
+    const uint8_t green_background, 
+    const uint8_t blue_background
+){
+    uint16_t temp_cursor_row = cursor_row;
+    uint16_t temp_cursor_col = cursor_col;
+    
+    lcd::set_cursor(row, col);
+    
+    uint16_t iterator = 0;
+    while((iterator + col + 1) * FONT_COLS < screen_cols){
+        
+        lcd::lputc(' ', 
+                   red_background, 
+                   green_background, 
+                   blue_background,
+                   red_background, 
+                   green_background, 
+                   blue_background);
+        
+        iterator++;
+    }
+    
+    lcd::set_cursor(temp_cursor_row, temp_cursor_col);
 }
 
 /*

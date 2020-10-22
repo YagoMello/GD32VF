@@ -78,6 +78,7 @@ CFLAGS += -Wextra
 CFLAGS += -Wno-unused-variable
 CFLAGS += -Wno-unused-parameter
 CFLAGS += --specs=nosys.specs
+CFLAGS += -fno-exceptions
 
 # CXX compilation directives
 CXXFLAGS += -std=c++17
@@ -87,6 +88,7 @@ CXXFLAGS += -Wextra
 CXXFLAGS += -Wno-unused-variable
 CXXFLAGS += -Wno-unused-parameter
 CXXFLAGS += --specs=nosys.specs
+CXXFLAGS += -fno-exceptions
 
 # DEBUG Linker directives.
 DLFLAGS += -Wall
@@ -97,6 +99,7 @@ DLFLAGS += -nostartfiles
 DLFLAGS += -lc
 DLFLAGS += -lgcc
 DLFLAGS += -lstdc++
+DLFLAGS += --verbose
 DLFLAGS += --specs=nosys.specs
 DLFLAGS += -T$(EXT)/$(LDS)
 
