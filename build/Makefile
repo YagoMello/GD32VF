@@ -139,7 +139,7 @@ release:
 	$(CC)  $(MCUFLAGS) $(ASFLAGS)  $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(ASM)
 	$(CC)  $(MCUFLAGS) $(CFLAGS)   $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(FIRM) $(CODE_C)
 	$(CXX) $(MCUFLAGS) $(CXXFLAGS) $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(CODE_CPP)
-	$(CXX) $(MCUFLAGS) $(MCUFLAGS) $(RLFLAGS)  *.o -o      $(BIN)/$(NAME).elf
+	$(CXX) $(MCUFLAGS) $(RLFLAGS)  *.o -o      $(BIN)/$(NAME).elf
 	$(OC)  $(ROCFLAGS) $(BIN)/$(NAME).elf      $(BIN)/$(NAME).bin
 	@echo  ''
 	@file  $(BIN)/$(NAME).elf

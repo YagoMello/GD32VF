@@ -62,7 +62,7 @@ void ds_print_value(proc_t * this_proc, void * payload){
     
     if(*printctr){
         (*printctr)--;
-        lcd::lpprintf(ROW_TEMP, LCD_WHITE, LCD_DARKBLUE, "Temp: %2.3f  ", ds[*printctr].get_temp(buffer[0][*printctr].data()));
+        lcd::lpprintf(ROW_TEMP, LCD_WHITE, LCD_DARKBLUE, "Temp: %2.3f%cC  ", ds[*printctr].get_temp(buffer[0][*printctr].data()), char(248));
         lcd::lpprintf(ROW_DEVICE_ID, LCD_WHITE, LCD_DARKBLUE, "%3hhu] %llx", *printctr + 1, wire->get_id(*printctr));
         if(printctr){
             sch::proc_add(this_proc);
@@ -77,7 +77,7 @@ void ds_read_value(proc_t *, void * payload){
     uint8_t    * printctr = &reinterpret_cast<read_ds_data_t *>(payload)->print_counter;
     
     static proc_t ds_print(ds_print_value, 
-                           sch::ticks_from_us(500'000),
+                           sch::ticks_from_us(500'000), // BUG 800'000+ crashes the program
                            proc_t::SINGLE,
                            payload);
     
