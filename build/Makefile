@@ -77,7 +77,7 @@ CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -Wno-unused-variable
 CFLAGS += -Wno-unused-parameter
-CFLAGS += --specs=nosys.specs
+CFLAGS += --specs=nano.specs
 CFLAGS += -fno-exceptions
 
 # CXX compilation directives
@@ -87,8 +87,9 @@ CXXFLAGS += -Wall
 CXXFLAGS += -Wextra
 CXXFLAGS += -Wno-unused-variable
 CXXFLAGS += -Wno-unused-parameter
-CXXFLAGS += --specs=nosys.specs
+CXXFLAGS += --specs=nano.specs
 CXXFLAGS += -fno-exceptions
+CXXFLAGS += -fno-use-cxa-atexit
 
 # DEBUG Linker directives.
 DLFLAGS += -Wall
@@ -100,21 +101,24 @@ DLFLAGS += -lc
 DLFLAGS += -lgcc
 DLFLAGS += -lstdc++
 DLFLAGS += --verbose
-DLFLAGS += --specs=nosys.specs
+DLFLAGS += -Wl,--verbose
+DLFLAGS += --specs=nano.specs
 DLFLAGS += -T$(EXT)/$(LDS)
+#DLFLAGS += -L/opt/riscv-gcc/gd32vf103/lib/gcc/riscv32-unknown-elf/10.2.0/
+#DLFLAGS += -L/opt/riscv-gcc/gd32vf103/riscv32-unknown-elf/lib
 
 # RELEASE Linker directives
-RLFLAGS += -Wall
-RLFLAGS += -Wextra
 RLFLAGS += -Wl,--relax
 RLFLAGS += -Wl,--gc-sections
 RLFLAGS += -nostartfiles
 RLFLAGS += -lc
 RLFLAGS += -lgcc
 RLFLAGS += -lstdc++
-RLFLAGS += --specs=nosys.specs
+RLFLAGS += --specs=nano.specs
 RLFLAGS += -flto -fuse-linker-plugin
 RLFLAGS += -T$(EXT)/$(LDS)
+#RLFLAGS += -L/opt/riscv-gcc/gd32vf103/lib/gcc/riscv32-unknown-elf/10.2.0/
+#RLFLAGS += -L/opt/riscv-gcc/gd32vf103/riscv32-unknown-elf/lib
 
 # Header file directories.
 INCLUDE += -I$(EXT)/
@@ -135,7 +139,7 @@ release:
 	$(CC)  $(MCUFLAGS) $(ASFLAGS)  $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(ASM)
 	$(CC)  $(MCUFLAGS) $(CFLAGS)   $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(FIRM) $(CODE_C)
 	$(CXX) $(MCUFLAGS) $(CXXFLAGS) $(RELFLAGS) $(MACRODEF) $(INCLUDE) $(CODE_CPP)
-	$(CXX) $(MCUFLAGS) $(RLFLAGS)  *.o -o      $(BIN)/$(NAME).elf
+	$(CXX) $(MCUFLAGS) $(MCUFLAGS) $(RLFLAGS)  *.o -o      $(BIN)/$(NAME).elf
 	$(OC)  $(ROCFLAGS) $(BIN)/$(NAME).elf      $(BIN)/$(NAME).bin
 	@echo  ''
 	@file  $(BIN)/$(NAME).elf

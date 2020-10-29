@@ -252,6 +252,7 @@ void sch::proc_add(proc_t * proc){
         
         //lets update the proc time from the interval
         if(proc->mode == proc_t::REPEAT){
+            // the proc is repeating
             
             // we are going to use the previous time as reference
             // lets check if it has a previous time
@@ -261,10 +262,16 @@ void sch::proc_add(proc_t * proc){
                 proc->time += proc->interval;
             }
             else{
-                //lets use the current time as the starting point
+                // lets use the current time as the starting point
                 proc->time = sch::get_current_time() + proc->interval;
             }
                 
+        }
+        else{
+            // just a single proc_add
+            // we dont have a reference
+            // lets use the current time as the starting point
+            proc->time = sch::get_current_time() + proc->interval;
         }
         
         // if the waiting list is empty
