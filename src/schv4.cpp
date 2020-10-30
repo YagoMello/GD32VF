@@ -96,35 +96,52 @@ proc_t * sch::proc_list      = nullptr;
 uint64_t sch::time_last_call = 0;
 
 void sch::remove_item_from_list(proc_t * proc){
-    // lets find our place in the list
-    if((proc->prev == nullptr) && (proc->next == nullptr)){
-        // we are at the beginning and the end of the list, simultaneously
-        proc_list = nullptr;
-    }
-    else if(proc->prev == nullptr){
-        // we are at the beginning of the list
+    
+    // we cannot remove a null pointer
+    if(proc != nullptr){
         
-        // make the next proc the list entry point
-        proc_list = proc->next;
+        // lets find our place in the list
+        if(
+            proc->prev == nullptr && 
+            proc->next == nullptr &&
+            proc_list  != proc
+        ){
+            // we are not in the list
+            // nothing to do
+        }
+        else if(
+            proc->prev == nullptr && 
+            proc->next == nullptr
+        ){
+            // we are at the beginning and the end of the list, simultaneously
+            proc_list = nullptr;
+        }
+        else if(proc->prev == nullptr){
+            // we are at the beginning of the list
+            
+            // make the next proc the list entry point
+            proc_list = proc->next;
+            
+            // and remove this proc reference from it
+            proc_list->prev = nullptr;
+        }
+        else if(proc->next != nullptr){
+            // we are in the middle of the list
+            proc->prev->next = proc->next;
+            proc->next->prev = proc->prev;
+        }
+        else{
+            // we are at the end of the list
+            
+            // make the prev entry the end of the list
+            proc->prev->next = nullptr;
+        }
         
-        // and remove this proc reference from it
-        proc_list->prev = nullptr;
-    }
-    else if(proc->next != nullptr){
-        // we are in the middle of the list
-        proc->prev->next = proc->next;
-        proc->next->prev = proc->prev;
-    }
-    else{
-        // we are at the end of the list
-        
-        // make the prev entry the end of the list
-        proc->prev->next = nullptr;
+        // and remove the list from this proc
+        proc->prev = nullptr;
+        proc->next = nullptr;
     }
     
-    // and remove the list from this proc
-    proc->prev = nullptr;
-    proc->next = nullptr;
 }
 
 void sch::overflow_cleanup(){
@@ -250,154 +267,165 @@ void sch::proc_add(proc_t * proc){
     // just a null pointer protection
     if(proc != nullptr){
         
-        //lets update the proc time from the interval
-        if(proc->mode == proc_t::REPEAT){
-            // the proc is repeating
+        // check if the proc is already on the list
+        if( // if the proc does not have any proc reference
+            proc->prev    == nullptr && 
+            proc->next    == nullptr && 
+            // and is not the first and unique element
+            proc_iterator != proc
+        ){
+            // this proc is not on the list, good
             
-            // we are going to use the previous time as reference
-            // lets check if it has a previous time
-            if(proc->time != 0){
-                // it has
-                // this will give a perfect time sync
-                proc->time += proc->interval;
+            // lets update the proc time from the interval
+            if(proc->mode == proc_t::REPEAT){
+                // the proc is repeating
+                
+                // we are going to use the previous time as reference
+                // lets check if it has a previous time
+                if(proc->time != 0){
+                    // it has
+                    // this will give a perfect time sync
+                    proc->time += proc->interval;
+                }
+                else{
+                    // lets use the current time as the starting point
+                    proc->time = sch::get_current_time() + proc->interval;
+                }
+                    
             }
             else{
+                // just a single proc_add
+                // we dont have a reference
                 // lets use the current time as the starting point
                 proc->time = sch::get_current_time() + proc->interval;
             }
-                
-        }
-        else{
-            // just a single proc_add
-            // we dont have a reference
-            // lets use the current time as the starting point
-            proc->time = sch::get_current_time() + proc->interval;
-        }
-        
-        // if the waiting list is empty
-        if(proc_iterator == nullptr){
-            // add the process as the first waiting
-            proc_list = proc;
             
-            // no one is before or after
-            proc->prev = nullptr;
-            proc->next = nullptr;
-        }
-        else{
-            // scan trough the list
-            while(not_done){
+            // if the waiting list is empty
+            if(proc_iterator == nullptr){
+                // add the process as the first waiting
+                proc_list = proc;
                 
-                // lets find our place in the list
-                if((proc_iterator->prev == nullptr) && (proc_iterator->next == nullptr)){
-                    // we are at the beginning and the end of the list, simultaneously
+                // no one is before or after
+                proc->prev = nullptr;
+                proc->next = nullptr;
+            }
+            else{
+                // scan trough the list
+                while(not_done){
                     
-                    // check if the proc in the list will be called later
-                    if(proc_iterator->time > proc->time){
-                        // the proc in the list will be called later
+                    // lets find our place in the list
+                    if((proc_iterator->prev == nullptr) && (proc_iterator->next == nullptr)){
+                        // we are at the beginning and the end of the list, simultaneously
                         
-                        // so we insert the proc in the fist slot in the list
-                        proc->prev = nullptr;
-                        proc->next = proc_iterator;
+                        // check if the proc in the list will be called later
+                        if(proc_iterator->time > proc->time){
+                            // the proc in the list will be called later
+                            
+                            // so we insert the proc in the fist slot in the list
+                            proc->prev = nullptr;
+                            proc->next = proc_iterator;
+                            
+                            proc_iterator->prev = proc;
+                            
+                            // and update the list entry point
+                            proc_list = proc;
+                            
+                            // and we are done
+                            not_done = false;
+                        }
+                        else{
+                            // the only option is to insert the element
+                            // after the last one
+                            proc->prev = proc_iterator;
+                            proc_iterator->next = proc;
+                            
+                            // no one is after
+                            proc->next = nullptr;
+                            
+                            // and we are done
+                            not_done = false;
+                        }
                         
-                        proc_iterator->prev = proc;
+                    }
+                    else if(proc_iterator->prev == nullptr){
+                        // we are at the beginning of the list
                         
-                        // and update the list entry point
-                        proc_list = proc;
+                        // check if the proc in the list will be called later
+                        if(proc_iterator->time > proc->time){
+                            // the proc in the list will be called later
+                            
+                            // so we insert the proc in the fist slot in the list
+                            proc->prev = nullptr;
+                            proc->next = proc_iterator;
+                            
+                            proc_iterator->prev = proc;
+                            
+                            // and update the list entry point
+                            proc_list = proc;
+                            
+                            // and we are done
+                            not_done = false;
+                        }
+                        else{
+                            // lets go to the next element in the list
+                            proc_iterator = proc_iterator->next;
+                        }
+                    }
+                    else if(proc_iterator->next != nullptr){
+                        // we are in the middle of the list
                         
-                        // and we are done
-                        not_done = false;
+                        // check if the proc in the list will be called later
+                        if(proc_iterator->time > proc->time){
+                            // the proc in the list will be called later
+                            
+                            // so we insert the proc in the list before the proc_iterator
+                            // because the total delay with its value is larger than desired
+                            proc->prev = proc_iterator->prev;
+                            proc->next = proc_iterator;
+                            
+                            proc_iterator->prev->next = proc;
+                            proc_iterator->prev = proc;
+                            
+                            // and we are done
+                            not_done = false;
+                        }
+                        else{
+                            // lets go to the next element in the list
+                            proc_iterator = proc_iterator->next;
+                        }
+                        
                     }
                     else{
-                        // the only option is to insert the element
-                        // after the last one
-                        proc->prev = proc_iterator;
-                        proc_iterator->next = proc;
+                        // we are at the end of the list
                         
-                        // no one is after
-                        proc->next = nullptr;
+                        // check if the acc delay is longer than the desired value
+                        if(proc_iterator->time > proc->time){
+                            // it is longer
+                            
+                            // so we insert the proc in the list before the proc_iterator
+                            // because the total delay with its value is larger than desired
+                            proc->prev = proc_iterator->prev;
+                            proc->next = proc_iterator;
+                            
+                            proc_iterator->prev->next = proc;
+                            proc_iterator->prev = proc;
+                            
+                            // and we are done
+                            not_done = false;
+                        }
+                        else{
+                            // the only option is to insert the element
+                            // after the last one
+                            proc->prev = proc_iterator;
+                            proc_iterator->next = proc;
+                            
+                            // no one is after
+                            proc->next = nullptr;
+                            
+                            // and we are done
+                            not_done = false;
+                        }
                         
-                        // and we are done
-                        not_done = false;
-                    }
-                    
-                }
-                else if(proc_iterator->prev == nullptr){
-                    // we are at the beginning of the list
-                    
-                    // check if the proc in the list will be called later
-                    if(proc_iterator->time > proc->time){
-                        // the proc in the list will be called later
-                        
-                        // so we insert the proc in the fist slot in the list
-                        proc->prev = nullptr;
-                        proc->next = proc_iterator;
-                        
-                        proc_iterator->prev = proc;
-                        
-                        // and update the list entry point
-                        proc_list = proc;
-                        
-                        // and we are done
-                        not_done = false;
-                    }
-                    else{
-                        // lets go to the next element in the list
-                        proc_iterator = proc_iterator->next;
-                    }
-                }
-                else if(proc_iterator->next != nullptr){
-                    // we are in the middle of the list
-                    
-                    // check if the proc in the list will be called later
-                    if(proc_iterator->time > proc->time){
-                        // the proc in the list will be called later
-                        
-                        // so we insert the proc in the list before the proc_iterator
-                        // because the total delay with its value is larger than desired
-                        proc->prev = proc_iterator->prev;
-                        proc->next = proc_iterator;
-                        
-                        proc_iterator->prev->next = proc;
-                        proc_iterator->prev = proc;
-                        
-                        // and we are done
-                        not_done = false;
-                    }
-                    else{
-                        // lets go to the next element in the list
-                        proc_iterator = proc_iterator->next;
-                    }
-                    
-                }
-                else{
-                    // we are at the end of the list
-                    
-                    // check if the acc delay is longer than the desired value
-                    if(proc_iterator->time > proc->time){
-                        // it is longer
-                        
-                        // so we insert the proc in the list before the proc_iterator
-                        // because the total delay with its value is larger than desired
-                        proc->prev = proc_iterator->prev;
-                        proc->next = proc_iterator;
-                        
-                        proc_iterator->prev->next = proc;
-                        proc_iterator->prev = proc;
-                        
-                        // and we are done
-                        not_done = false;
-                    }
-                    else{
-                        // the only option is to insert the element
-                        // after the last one
-                        proc->prev = proc_iterator;
-                        proc_iterator->next = proc;
-                        
-                        // no one is after
-                        proc->next = nullptr;
-                        
-                        // and we are done
-                        not_done = false;
                     }
                     
                 }
@@ -411,11 +439,6 @@ void sch::proc_add(proc_t * proc){
 }
 
 void sch::proc_kill(proc_t * proc){
-    
-    // we cannot remove a null pointer
-    if(proc != nullptr){
-        sch::remove_item_from_list(proc);
-    }
-    
+    sch::remove_item_from_list(proc);
 }
  

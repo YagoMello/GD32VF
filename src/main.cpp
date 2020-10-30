@@ -77,7 +77,7 @@ void ds_read_value(proc_t *, void * payload){
     uint8_t    * printctr = &reinterpret_cast<read_ds_data_t *>(payload)->print_counter;
     
     static proc_t ds_print(ds_print_value, 
-                           sch::ticks_from_us(500'000), // BUG 800'000+ crashes the program
+                           sch::ticks_from_us(800'000), // BUG 800'000+ crashes the program
                            proc_t::SINGLE,
                            payload);
     
